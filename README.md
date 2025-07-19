@@ -26,37 +26,68 @@ open http://localhost:3000
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Frontend Shell │    │ Tickets Frontend│    │      N8N        │
-│   (Port 3000)   │    │   (Port 3002)   │    │   (Port 5678)   │
-│                 │    │                 │    │                 │
-│  - Dashboard    │    │  - Ticket CRUD  │    │  - Workflows    │
-│  - Auth UI      │    │  - Tenant Views │    │  - Automation   │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    TenantFlow Architecture                      │
+└─────────────────────────────────────────────────────────────────┘
+                             
+                        ┌─────────────────┐
+                        │  Frontend Shell │
+                        │   (Port 3000)   │
+                        │                 │
+                        │ - Dashboard     │
+                        │ - Login/Auth    │
+                        │ - Ticket UI     │
+                        └─────────────────┘
                                  │
-                    ┌─────────────▼───────────┐
-                    │     Backend API        │
-                    │     (Port 3001)        │
-                    │                        │
-                    │  - Multi-tenant Auth   │
-                    │  - REST API            │
-                    │  - Webhook Handlers    │
-                    │  - Real-time Updates   │
-                    └─────────────┬──────────┘
-                                  │
-                    ┌─────────────▼──────────┐
-                    │      MongoDB           │
-                    │    (Port 27017)        │
-                    │                        │
-                    │  - Tenant Isolation    │
-                    │  - User Management     │
-                    │  - Ticket Storage      │
-                    │  - Activity Logs       │
-                    └────────────────────────┘
-```
+                                 │ HTTP/WebSocket
+                                 ▼
+                        ┌─────────────────┐
+                        │   Backend API   │
+                        │   (Port 3001)   │
+                        │                 │
+                        │ - JWT Auth      │
+                        │ - REST APIs     │
+                        │ - Webhooks      │
+                        │ - Multi-tenant  │
+                        └─────────────────┘
+                              │         │
+                    ┌─────────┘         └─────────┐
+                    ▼                             ▼
+          ┌─────────────────┐           ┌─────────────────┐
+          │    MongoDB      │           │      N8N        │
+          │  (Port 27017)   │           │  (Port 5678)    │
+          │                 │           │                 │
+          │ - Users         │◄──────────┤ - Workflows     │
+          │ - Tickets       │  Callback │ - Automation    │
+          │ - Audit Logs    │           │ - Email Alerts  │
+          └─────────────────┘           └─────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      Data Flow                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+1. User Login → JWT Token → Dashboard Access
+2. Create Ticket → Store in MongoDB → Trigger N8N
+3. N8N Process → Email Alert → Webhook Callback
+4. Update Status → Real-time UI Refresh
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   Tenant Isolation                              │
+└─────────────────────────────────────────────────────────────────┘
+
+LogisticsCo ────┐                    ┌──── RetailGmbH
+Data            │                    │     Data
+                ▼                    ▼
+            ┌─────────────────────────────┐
+            │     Backend Middleware      │
+            │   (customerId filtering)    │
+            └─────────────────────────────┘
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │  MongoDB    │
+                  │ Collections │
+                  └─────────────┘
 
 ## 👥 Test Tenants
 
