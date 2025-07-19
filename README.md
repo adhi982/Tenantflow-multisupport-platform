@@ -62,33 +62,10 @@ open http://localhost:3000
           │ - Audit Logs    │           │ - Email Alerts  │
           └─────────────────┘           └─────────────────┘
 
-┌─────────────────────────────────────────────────────────────────┐
-│                      Data Flow                                  │
-└─────────────────────────────────────────────────────────────────┘
 
-1. User Login → JWT Token → Dashboard Access
-2. Create Ticket → Store in MongoDB → Trigger N8N
-3. N8N Process → Email Alert → Webhook Callback
-4. Update Status → Real-time UI Refresh
+          <img width="680" height="631" alt="Tenant Isolation" src="https://github.com/user-attachments/assets/049d7d27-28cc-4415-8776-1ebb5e95be2b" />
 
-┌─────────────────────────────────────────────────────────────────┐
-│                   Tenant Isolation                              │
-└─────────────────────────────────────────────────────────────────┘
-    │                                         │
-    ▼                                         ▼
-LogisticsCo ────┐                    ┌──── RetailGmbH
-Data            │                    │     Data
-                ▼                    ▼
-            ┌─────────────────────────────┐
-            │     Backend Middleware      │
-            │   (customerId filtering)    │
-            └─────────────────────────────┘
-                         │
-                         ▼
-                  ┌─────────────┐
-                  │  MongoDB    │
-                  │ Collections │
-                  └─────────────┘
+
 
 ## 👥 Test Tenants
 
