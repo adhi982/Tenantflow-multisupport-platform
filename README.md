@@ -64,6 +64,7 @@ open http://localhost:3000
           └─────────────────┘           └─────────────────┘
 
 ```
+<img width="680" height="631" alt="Tenant Isolation" src="https://github.com/user-attachments/assets/484c5248-611b-46ad-beee-348b8d229d47" />
 
 ## 👥 Test Tenants
 
