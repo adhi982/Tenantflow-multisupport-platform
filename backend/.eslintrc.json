@@ -1,0 +1,32 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true,
+    "jest": true
+  },
+  "extends": [
+    "standard"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": ["error", 2],
+    "quotes": ["error", "single"],
+    "semi": ["error", "never"],
+    "no-console": "warn",
+    "no-unused-vars": "error",
+    "prefer-const": "error",
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "comma-dangle": ["error", "never"],
+    "eol-last": ["error", "always"],
+    "no-trailing-spaces": "error"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "coverage/"
+  ]
+}

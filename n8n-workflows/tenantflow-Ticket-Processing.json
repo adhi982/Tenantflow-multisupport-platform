@@ -1,0 +1,269 @@
+{
+  "name": "tenantflow-Ticket-Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flowbit-ticket",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3c6ec01f-9d98-4cfa-9b69-03d689fe5f76",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        64
+      ],
+      "webhookId": "flowbit-ticket-webhook",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "ticketId",
+              "value": "={{ $json.body.id }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.body.title }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.body.description }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ $json.body.priority }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.body.status }}"
+            },
+            {
+              "name": "assignedTo",
+              "value": "={{ $json.body.assignedTo }}"
+            },
+            {
+              "name": "createdAt",
+              "value": "={{ $json.body.createdAt }}"
+            },
+            {
+              "name": "tenantId",
+              "value": "={{ $json.body.customerId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a019f5e-d890-4072-85cd-721143c6e024",
+      "name": "Set Ticket Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.priority}}",
+              "value2": "high"
+            }
+          ]
+        }
+      },
+      "id": "af4728cf-5dc1-48a9-9d0f-250953329c7c",
+      "name": "Priority Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "seconds"
+      },
+      "id": "a9389fb7-973e-4235-84f1-99ce717006ee",
+      "name": "Wait for Processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        480,
+        64
+      ],
+      "webhookId": "bf46995d-e30b-4a33-8d37-b2f8cf717cc3"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://backend:3001/webhook/n8n-callback",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "ticketId",
+              "value": "={{ $('Set Ticket Data').item.json.ticketId }}"
+            },
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "workflowId",
+              "value": "flowbit-ticket-workflow"
+            },
+            {
+              "name": "customerId",
+              "value": "={{ $('Set Ticket Data').item.json.tenantId }}"
+            }
+          ]
+        }
+      },
+      "id": "ed26fcfb-6b7c-4117-908a-5406c2f30f70",
+      "name": "Backend Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        752,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Ticket workflow completed\",\n  \"ticketId\": \"{{$json.ticketId}}\",\n  \"status\": \"processed\"\n}",
+        "options": {}
+      },
+      "id": "d8b6b01b-4c17-4158-9a34-7986c18c6e4a",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "adithyaadhi505@gmail.com",
+        "subject": "={{ $json.body.priority }}  Priority Ticket Created -  {{ $json.body.title }}",
+        "message": "={{ $json.body.description }} from {{ $json.body.customerId }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        64
+      ],
+      "id": "ed16f3a9-8979-4aab-8aeb-2976bef1ad1e",
+      "name": "Send a message",
+      "webhookId": "f7d48cd4-e33b-45c1-945b-0adf13d7bf9a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OoUu6RYIByA0YRkj",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Ticket Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Ticket Data": {
+      "main": [
+        [
+          {
+            "node": "Priority Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Priority Check": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Processing": {
+      "main": [
+        [
+          {
+            "node": "Backend Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backend Callback": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait for Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2f8179ee-8c0b-4827-a242-7217627370bf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dd02fb08534876f9d44c13bdae1e00ab5dc7163171cf390d807acbba17d8500c"
+  },
+  "id": "cAPUZOW34eauj5jH",
+  "tags": []
+}

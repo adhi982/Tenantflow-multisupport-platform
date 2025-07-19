@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="FlowBit Multi-Tenant Support Platform" />
+    <title>FlowBit - Customer Support Platform</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+        }
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <strong>Debug Info:</strong><br>
+        HTML loaded at: <span id="load-time"></span><br>
+        Scripts loaded: <span id="script-count">0</span><br>
+        React status: <span id="react-status">Waiting...</span>
+    </div>
+    
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; color: #374151;">
+            <div style="text-align: center;">
+                <h1>Loading FlowBit...</h1>
+                <p>If React doesn't load, check the debug info in the top-right corner.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('load-time').textContent = new Date().toLocaleTimeString();
+        document.getElementById('script-count').textContent = document.scripts.length;
+        
+        // Check if React loads
+        setTimeout(() => {
+            const root = document.getElementById('root');
+            if (root.innerHTML.includes('Loading FlowBit...')) {
+                document.getElementById('react-status').textContent = 'Failed to load';
+                document.getElementById('react-status').style.color = 'red';
+            } else {
+                document.getElementById('react-status').textContent = 'Loaded successfully';
+                document.getElementById('react-status').style.color = 'green';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

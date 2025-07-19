@@ -1,0 +1,93 @@
+{
+  "name": "flowbit-platform",
+  "version": "1.0.0",
+  "description": "Multi-tenant SaaS platform with n8n workflow integration",
+  "scripts": {
+    "dev": "npm run docker:dev",
+    "dev:local": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:tickets\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend-shell && npm start",
+    "dev:tickets": "cd frontend-tickets && npm start",
+    
+    "build": "npm run docker:build:prod",
+    "build:local": "npm run build:backend && npm run build:frontend && npm run build:tickets",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend-shell && npm run build",
+    "build:tickets": "cd frontend-tickets && npm run build",
+    
+    "test": "npm run test:all",
+    "test:all": "npm run test:backend && npm run test:frontend && npm run test:tickets",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend-shell && npm test -- --watchAll=false",
+    "test:tickets": "cd frontend-tickets && npm test -- --watchAll=false",
+    "test:integration": "npm run docker:test",
+    "test:e2e": "cypress run",
+    
+    "seed": "cd backend && npm run seed",
+    "seed:docker": "docker-compose exec backend npm run seed",
+    
+    "docker:dev": "powershell -ExecutionPolicy Bypass -File scripts/dev-start.ps1",
+    "docker:stop": "powershell -ExecutionPolicy Bypass -File scripts/dev-stop.ps1",
+    "docker:clean": "powershell -ExecutionPolicy Bypass -File scripts/dev-clean.ps1",
+    "docker:logs": "powershell -ExecutionPolicy Bypass -File scripts/dev-logs.ps1",
+    "docker:monitor": "powershell -ExecutionPolicy Bypass -File scripts/dev-monitor.ps1",
+    "docker:build:prod": "powershell -ExecutionPolicy Bypass -File scripts/build-prod.ps1",
+    "docker:prod": "powershell -ExecutionPolicy Bypass -File scripts/prod-start.ps1",
+    "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit",
+    
+    "lint": "npm run lint:backend && npm run lint:frontend && npm run lint:tickets",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend-shell && npm run lint",
+    "lint:tickets": "cd frontend-tickets && npm run lint",
+    "lint:fix": "npm run lint:backend -- --fix && npm run lint:frontend -- --fix && npm run lint:tickets -- --fix",
+    
+    "format": "npm run format:backend && npm run format:frontend && npm run format:tickets",
+    "format:backend": "cd backend && npm run format",
+    "format:frontend": "cd frontend-shell && npm run format",
+    "format:tickets": "cd frontend-tickets && npm run format",
+    
+    "install:all": "npm install && cd backend && npm install && cd ../frontend-shell && npm install && cd ../frontend-tickets && npm install",
+    "clean": "npm run docker:clean",
+    "clean:all": "npm run clean && npm run clean:node_modules",
+    "clean:node_modules": "rm -rf node_modules backend/node_modules frontend-shell/node_modules frontend-tickets/node_modules",
+    
+    "deps:check": "npm audit && cd backend && npm audit && cd ../frontend-shell && npm audit && cd ../frontend-tickets && npm audit",
+    "deps:update": "npm update && cd backend && npm update && cd ../frontend-shell && npm update && cd ../frontend-tickets && npm update",
+    
+    "setup": "npm run install:all && npm run seed",
+    "reset": "npm run clean:all && npm run setup",
+    
+    "ci": "npm run install:all && npm run lint && npm run test && npm run build:local",
+    "deploy:staging": "npm run build && npm run docker:prod",
+    "deploy:prod": "echo 'Production deployment - implement your deployment strategy'",
+    
+    "health": "curl -f http://localhost:3001/health && curl -f http://localhost:3000/health && curl -f http://localhost:3002/health"
+  },
+  "workspaces": [
+    "backend",
+    "frontend-shell", 
+    "frontend-tickets"
+  ],
+  "keywords": [
+    "multi-tenant",
+    "saas",
+    "n8n",
+    "workflow",
+    "microservices",
+    "module-federation"
+  ],
+  "author": "FlowBit Platform Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "cypress": "^13.6.0",
+    "wait-on": "^7.2.0",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

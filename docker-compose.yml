@@ -1,0 +1,229 @@
+version: '3.8'
+
+# Production-ready container orchestration with multi-stage builds
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: tenantflow-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: tenantflow
+    volumes:
+      - mongodb_data:/data/db
+      - ./seed-data:/docker-entrypoint-initdb.d
+    networks:
+      - tenantflow-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # Backend API with multi-stage build
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET:-development}  # development or production
+    container_name: tenantflow-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/tenantflow?authSource=admin
+      JWT_SECRET: tenantflow-super-secret-jwt-key-2025
+      JWT_EXPIRES_IN: 24h
+      BCRYPT_ROUNDS: 12
+      WEBHOOK_SECRET: tenantflow-webhook-secret-2025
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook-test
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      # Volume mounting for development (hot reload)
+      - ./backend:/app:cached
+      - backend_node_modules:/app/node_modules
+    networks:
+      - tenantflow-network
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Frontend Shell with multi-stage build and volume optimization
+  frontend-shell:
+    build:
+      context: ./frontend-shell
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET:-development}  # development or production
+    container_name: tenantflow-frontend-shell
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+      REACT_APP_TICKETS_URL: http://localhost:3002
+      GENERATE_SOURCEMAP: false
+      CHOKIDAR_USEPOLLING: true  # Enable hot reload in Docker
+      FAST_REFRESH: true
+    volumes:
+      # Volume mounting for development (hot reload)
+      - ./frontend-shell:/app:cached
+      - shell_node_modules:/app/node_modules
+      - shell_build:/app/build
+    networks:
+      - tenantflow-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.75'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # n8n Workflow Engine with optimized configuration
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: tenantflow-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: true
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: flowbit123
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: UTC
+      DB_TYPE: sqlite
+      DB_SQLITE_DATABASE: /home/node/.n8n/database.sqlite
+      N8N_LOG_LEVEL: info
+      N8N_DISABLE_PRODUCTION_MAIN_PROCESS: true
+      N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN: true
+      EXECUTIONS_PROCESS: main
+      EXECUTIONS_MODE: regular
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/home/node/.n8n/workflows:cached
+    networks:
+      - tenantflow-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # ngrok for webhook tunneling (optional - for local development)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: tenantflow-ngrok
+    restart: unless-stopped
+    command: http backend:3001 --log stdout
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}  # Add your ngrok token in .env
+    ports:
+      - "4040:4040"  # ngrok web interface
+    depends_on:
+      - backend
+    networks:
+      - tenantflow-network
+    profiles:
+      - ngrok  # Use: docker-compose --profile ngrok up
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+# Optimized volumes for development and production
+volumes:
+  # Persistent data volumes
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/mongodb
+  n8n_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/volumes/n8n
+  
+  # Node modules caching volumes (performance optimization)
+  backend_node_modules:
+    driver: local
+  shell_node_modules:
+    driver: local
+  tickets_node_modules:
+    driver: local
+  
+  # Build caching volumes
+  shell_build:
+    driver: local
+  tickets_build:
+    driver: local
+
+# Optimized network configuration
+networks:
+  tenantflow-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
