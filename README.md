@@ -11,7 +11,7 @@ A complete multi-tenant SaaS platform with real-time ticket management, workflow
 ### Start the Platform
 ```bash
 # Clone and navigate to project
-git clone <your-repo-url>
+git clone https://github.com/adhi982/Tenantflow-multisupport-platform.git
 cd tenantflow-platform
 
 # Start all services
@@ -27,35 +27,42 @@ open http://localhost:3000
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Frontend Shell │    │ Tickets Frontend│    │      N8N        │
-│   (Port 3000)   │    │   (Port 3002)   │    │   (Port 5678)   │
-│                 │    │                 │    │                 │
-│  - Dashboard    │    │  - Ticket CRUD  │    │  - Workflows    │
-│  - Auth UI      │    │  - Tenant Views │    │  - Automation   │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    TenantFlow Architecture                      │
+└─────────────────────────────────────────────────────────────────┘
+                             
+                        ┌─────────────────┐
+                        │  Frontend Shell │
+                        │   (Port 3000)   │
+                        │                 │
+                        │ - Dashboard     │
+                        │ - Login/Auth    │
+                        │ - Ticket UI     │
+                        └─────────────────┘
                                  │
-                    ┌─────────────▼───────────┐
-                    │     Backend API        │
-                    │     (Port 3001)        │
-                    │                        │
-                    │  - Multi-tenant Auth   │
-                    │  - REST API           │
-                    │  - Webhook Handlers   │
-                    │  - Real-time Updates  │
-                    └─────────────┬──────────┘
-                                  │
-                    ┌─────────────▼───────────┐
-                    │      MongoDB           │
-                    │    (Port 27017)        │
-                    │                        │
-                    │  - Tenant Isolation    │
-                    │  - User Management     │
-                    │  - Ticket Storage      │
-                    │  - Activity Logs       │
-                    └────────────────────────┘
+                                 │ HTTP/WebSocket
+                                 ▼
+                        ┌─────────────────┐
+                        │   Backend API   │
+                        │   (Port 3001)   │
+                        │                 │
+                        │ - JWT Auth      │
+                        │ - REST APIs     │
+                        │ - Webhooks      │
+                        │ - Multi-tenant  │
+                        └─────────────────┘
+                              │         │
+                    ┌─────────┘         └─────────┐
+                    ▼                             ▼
+          ┌─────────────────┐           ┌─────────────────┐
+          │    MongoDB      │           │      N8N        │
+          │  (Port 27017)   │           │  (Port 5678)    │
+          │                 │           │                 │
+          │ - Users         │◄──────────┤ - Workflows     │
+          │ - Tickets       │  Callback │ - Automation    │
+          │ - Audit Logs    │           │ - Email Alerts  │
+          └─────────────────┘           └─────────────────┘
+
 ```
 
 ## 👥 Test Tenants
@@ -63,12 +70,12 @@ open http://localhost:3000
 The platform includes two pre-configured tenants:
 
 ### LogisticsCo
-- **Admin**: `admin@logisticsco.com` / `admin123`
+- **Admin**: `admin@logistics-co.com` / `admin123`
 - **Support**: `support1@logisticsco.com` / `user123`
 - **Customer ID**: `logistics-co`
 
 ### RetailGmbH  
-- **Admin**: `admin@retailgmbh.de` / `admin123`
+- **Admin**: `admin@retail-gmbh.com` / `admin123`
 - **Support**: `support1@retailgmbh.de` / `user123`
 - **Customer ID**: `retail-gmbh`
 
@@ -77,51 +84,50 @@ The platform includes two pre-configured tenants:
 ### ✅ Multi-Tenancy
 - Complete tenant isolation at database level
 - Tenant-specific user management
-- Isolated ticket systems per tenant
+- JWT tokens with customerId context
 
 ### ✅ Real-Time Dashboard
-- Auto-refreshing workflow status (10-second intervals)
-- Live activity feed
-- Tenant-specific metrics
+- Auto-refreshing ticket status updates
+- Live activity feed showing workflow progress
+- Tenant-specific metrics and analytics
 
 ### ✅ Workflow Automation
-- N8N integration for ticket processing
-- Webhook-based status updates
+- N8N integration for automated ticket processing
+- Webhook-based status callbacks
 - Email notifications for high-priority tickets
 
 ### ✅ Robust Authentication
-- JWT-based authentication
+- JWT-based authentication with role validation
 - Role-based access control (Admin/User)
-- Secure password hashing
+- Secure password hashing with bcrypt
 
 ## 🎬 Demo Flow
 
 1. **Login as LogisticsCo Admin**
    - Navigate to http://localhost:3000
-   - Use credentials: `admin@logisticsco.com` / `admin123`
+   - Use credentials: `admin@logistics-co.com` / `admin123`
    - Customer ID: `logistics-co`
 
 2. **Create a Ticket**
-   - Go to Tickets section
+   - Go to Tickets section in dashboard
    - Create a new high-priority ticket
-   - Observe workflow trigger
+   - Observe automatic workflow trigger
 
 3. **Monitor Real-Time Updates**
    - Watch dashboard for status changes
-   - See activity logs update in real-time
-   - Note workflow progression
+   - See activity logs update automatically
+   - Note workflow progression in real-time
 
 4. **Test Tenant Isolation**
    - Logout and login as RetailGmbH Admin
-   - Verify separate ticket view
-   - Confirm data isolation
+   - Verify completely separate ticket view
+   - Confirm zero cross-tenant data access
 
-## � Services Overview
+## 🏢 Services Overview
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Frontend Shell | 3000 | Main dashboard and authentication |
-| Tickets Frontend | 3002 | Ticket management interface |
+| Frontend Shell | 3000 | Main dashboard and authentication UI |
 | Backend API | 3001 | REST API and business logic |
 | N8N Workflows | 5678 | Automation and workflow engine |
 | MongoDB | 27017 | Database and data persistence |
@@ -134,6 +140,7 @@ docker-compose ps
 
 # View logs for specific service
 docker-compose logs frontend-shell
+docker-compose logs backend
 
 # Restart a specific service
 docker-compose restart backend
@@ -149,232 +156,112 @@ docker-compose up -d --build
 
 ```bash
 # Access MongoDB shell
-docker exec -it tenantflow-mongodb mongosh --username admin --password password123 --authenticationDatabase admin
+docker exec -it tenantflow-mongodb mongosh tenantflow
 
-# Or use MongoDB Compass with:
-# mongodb://admin:password123@localhost:27017/?authSource=admin
-```
+# View collections
+show collections
 
-## 🚨 Known Limitations
+# Check users
+db.users.find().pretty()
 
-1. **Development Environment**: Currently configured for local development with basic security
-2. **Email Integration**: Requires Gmail OAuth setup for N8N email notifications
-3. **Scalability**: Single MongoDB instance (production would need replica sets)
-4. **SSL**: No HTTPS configured (production requirement)
-5. **Monitoring**: Basic health checks (production needs comprehensive monitoring)
-
-## 🔧 Environment Configuration
-
-Key environment variables (already configured in docker-compose.yml):
-- `NODE_ENV=development`
-- `MONGODB_URI` - Database connection
-- `JWT_SECRET` - Authentication secret
-- `N8N_BASIC_AUTH` - Workflow engine access
-
-## 📝 API Documentation
-
-Once running, access interactive API docs at:
-- **Swagger UI**: http://localhost:3001/api-docs
-- **Health Check**: http://localhost:3001/health
-
-## 🏢 Multi-Tenant Features Demonstrated
-
-- **Data Isolation**: Each tenant sees only their data
-- **User Management**: Tenant-specific user accounts
-- **Workflow Isolation**: Separate N8N workflows per tenant
-- **Dashboard Customization**: Tenant-branded interfaces
-- **Activity Tracking**: Tenant-specific audit logs
-
-## 📹 Demo Video Checklist
-
-✅ Show login for both tenants  
-✅ Demonstrate ticket creation  
-✅ Prove real-time status updates  
-✅ Verify tenant data isolation  
-✅ Show workflow automation  
-✅ Display dashboard functionality  
-
----
-
-**Built with**: Node.js, React, MongoDB, Docker, N8N
-**Architecture**: Microservices with container orchestration
-**Deployment**: Docker Compose for easy local development
-
-### 1. Clone & Setup
-```bash
-git clone <repository-url>
-cd tenantflow-platform
-cp .env.example .env
-```
-
-### 2. Start Development Environment
-```bash
-# Install all dependencies
-npm run install:all
-
-# Start all services with Docker
-npm run dev
-```
-
-### 3. Access the Platform
-- **Frontend Shell**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **n8n Workflows**: http://localhost:5678 (admin/tenantflow123)
-- **MongoDB**: localhost:27017
-
-### 4. Login Credentials
-```
-LogisticsCo Admin:
-Email: admin@logisticsco.com
-Password: Admin123!
-
-RetailGmbH Admin:  
-Email: admin@retailgmbh.com
-Password: Admin123!
+# Check tickets by tenant
+db.tickets.find({"customerId": "logistics-co"}).pretty()
 ```
 
 ## 📊 Core Requirements Verification
 
 ### ✅ R1: Auth & RBAC
-- JWT tokens with customerId and role
-- Admin-only routes protected
-- bcrypt password hashing
+- JWT tokens carry customerId and role
+- Admin/User role-based access control
+- bcrypt password hashing implementation
 
 ### ✅ R2: Tenant Data Isolation  
-- All MongoDB collections include customerId
-- Jest test proves cross-tenant isolation
-- Middleware enforces tenant boundaries
+- All MongoDB collections include customerId field
+- Middleware enforces strict tenant boundaries
+- Cross-tenant data access completely blocked
 
 ### ✅ R3: Use-Case Registry
-- `registry.json` maps tenant screens
-- `/me/screens` endpoint returns tenant config
-- Dynamic navigation generation
+- Tenant-specific screen configurations
+- Dynamic navigation based on tenant context
+- Role-based feature access
 
 ### ✅ R4: Dynamic Navigation
-- React shell fetches tenant screens
-- Webpack Module Federation for micro-frontends
-- Lazy-loaded SupportTicketsApp
+- React shell with tenant-aware routing
+- Dynamic sidebar generation
+- Context-sensitive user interface
 
 ### ✅ R5: Workflow Integration
-- n8n container in docker-compose
-- POST /api/tickets triggers workflow
-- Webhook callback updates ticket status
-- Real-time UI updates
+- N8N container fully integrated
+- POST /api/tickets triggers workflows
+- Webhook callbacks update ticket status
+- Real-time UI updates via polling
 
 ### ✅ R6: Containerized Development
-- Complete docker-compose setup
+- Complete Docker Compose setup
 - Auto-configuration on startup
 - Health checks for all services
 
 ## 🗂️ Project Structure
 
 ```
-flowbit-platform/
+tenantflow-platform/
 ├── backend/                 # Node.js API with Express
 │   ├── src/
-│   │   ├── controllers/     # Route handlers
-│   │   ├── middleware/      # Auth, tenant isolation
+│   │   ├── controllers/     # API route handlers
+│   │   ├── middleware/      # Auth & tenant isolation
 │   │   ├── models/          # MongoDB schemas
-│   │   ├── routes/          # API endpoints
-│   │   ├── services/        # Business logic
+│   │   ├── routes/          # API endpoint definitions
+│   │   ├── services/        # Business logic layer
 │   │   └── utils/           # Helper functions
-│   └── tests/               # Jest unit tests
+│   ├── seed-users.js        # Database seeding script
+│   └── Dockerfile           # Backend container config
 ├── frontend-shell/          # React main application
 │   ├── src/
 │   │   ├── components/      # UI components
-│   │   ├── contexts/        # React contexts
-│   │   ├── hooks/           # Custom hooks
-│   │   └── services/        # API clients
-│   └── webpack.config.js    # Module Federation config
-├── frontend-tickets/        # Support tickets micro-frontend
-│   ├── src/
-│   │   ├── components/      # Ticket-specific components
-│   │   └── hooks/           # Ticket management hooks
-│   └── webpack.config.js    # Remote module config
+│   │   ├── services/        # API client services
+│   │   └── App.js           # Main application
+│   └── Dockerfile           # Frontend container config
 ├── n8n-workflows/           # Workflow definitions
-├── seed-data/              # Initial tenant data
-├── docker-compose.yml      # Container orchestration
-└── registry.json          # Tenant configuration
-```
-
-## 🧪 Testing
-
-### Run All Tests
-```bash
-npm test
-```
-
-### Critical Tenant Isolation Test
-```bash
-cd backend
-npm run test -- --testNamePattern="Tenant Data Isolation"
-```
-
-### E2E Testing (Optional)
-```bash
-cd frontend-shell
-npm run test:e2e
-```
-
-## 🔧 Development Scripts
-
-```bash
-# Development
-npm run dev                 # Start all services
-npm run dev:backend        # Backend only  
-npm run dev:frontend       # Frontend shell only
-npm run dev:tickets        # Tickets app only
-
-# Building
-npm run build              # Build all apps
-npm run build:backend      # Build backend
-npm run build:frontend     # Build frontend shell
-npm run build:tickets      # Build tickets app
-
-# Database
-npm run seed               # Seed database with test data
-
-# Maintenance
-npm run clean              # Clean Docker environment
-npm run install:all        # Install all dependencies
+│   └── tenantflow-Ticket-Processing.json
+├── docker-compose.yml       # Container orchestration
+├── verify-submission.bat    # Platform verification script
+├── SUBMISSION_CHECKLIST.md  # Demo guidelines
+└── README.md               # This documentation
 ```
 
 ## 🔐 Security Features
 
-- JWT authentication with tenant context
+- JWT authentication with tenant isolation
 - bcrypt password hashing (12 rounds)
-- CORS configuration
-- Rate limiting
-- Input validation (Joi)
-- Helmet security headers
+- CORS security headers
+- Input validation and sanitization
+- Role-based access control
 - Tenant isolation middleware
+- Secure API endpoint protection
 
 ## 📈 Workflow Example
 
 1. **User creates ticket** → POST /api/tickets
-2. **Backend triggers n8n** → Webhook to n8n workflow  
-3. **n8n processes ticket** → Business logic execution
-4. **n8n calls back** → POST /webhook/ticket-done
-5. **Backend updates status** → MongoDB update
-6. **Frontend refreshes** → Real-time status update
+2. **Backend triggers N8N** → Webhook to workflow engine
+3. **N8N processes ticket** → Automated business logic
+4. **N8N calls back** → POST /webhook/n8n-callback
+5. **Backend updates status** → MongoDB status update
+6. **Frontend refreshes** → Real-time dashboard update
 
 ## 🐳 Docker Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| frontend-shell | 3000 | React main application |
-| backend | 3001 | Node.js API server |
-| frontend-tickets | 3002 | Tickets micro-frontend |
-| n8n | 5678 | Workflow automation |
-| mongodb | 27017 | Database |
-| ngrok | 4040 | Webhook tunnel (optional) |
+| Container | Port | Status | Description |
+|-----------|------|--------|-------------|
+| tenantflow-frontend-shell | 3000 | ✅ Running | React dashboard |
+| tenantflow-backend | 3001 | ✅ Running | Node.js API |
+| tenantflow-n8n | 5678 | ✅ Running | Workflow engine |
+| tenantflow-mongodb | 27017 | ✅ Running | Database |
 
 ## 📝 API Documentation
 
 ### Authentication
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout  
-- `GET /me` - Current user info
+- `POST /auth/login` - User login with tenant context
+- `GET /me` - Current user profile
 
 ### Tickets
 - `GET /api/tickets` - List tickets (tenant-filtered)
@@ -382,53 +269,79 @@ npm run install:all        # Install all dependencies
 - `PUT /api/tickets/:id` - Update ticket
 - `GET /api/tickets/:id` - Get ticket details
 
-### Tenant Configuration
-- `GET /me/screens` - Get tenant screen configuration
+### Dashboard
+- `GET /api/dashboard/stats` - Tenant dashboard metrics
+- `GET /api/dashboard/activities` - Recent activity feed
 
 ### Webhooks
-- `POST /webhook/ticket-done` - n8n callback endpoint
+- `POST /webhook/n8n-callback` - N8N workflow callback
 
 ## 🚨 Known Limitations
 
-- Single database instance (would use database per tenant in production)
-- Basic n8n workflow templates (would be more complex in production)
-- No real-time WebSocket implementation (using polling)
-- Limited error handling in demo scenarios
+1. **Development Environment**: Basic security configuration for local development
+2. **Single Database**: Production would use separate databases per tenant
+3. **Email Integration**: Requires Gmail OAuth configuration for N8N
+4. **Real-time**: Currently using polling (WebSocket would be production enhancement)
+5. **SSL**: No HTTPS configured (production requirement)
 
 ## 🎥 Demo Video Highlights
 
-The demo video showcases:
-1. Login as LogisticsCo admin
-2. Create support ticket
-3. n8n workflow automatic trigger
-4. Real-time status update
-5. Switch to RetailGmbH tenant
-6. Verify complete data isolation
-7. Role-based access demonstration
+✅ **Multi-tenant Login**: Both LogisticsCo and RetailGmbH  
+✅ **Ticket Creation**: High-priority ticket demonstration  
+✅ **Real-time Updates**: Status changes visible immediately  
+✅ **Tenant Isolation**: Complete data separation proof  
+✅ **Workflow Automation**: N8N integration showcase  
+✅ **Dashboard Functionality**: Live metrics and activity feed  
 
-## 🔮 Future Enhancements
 
-- WebSocket real-time updates
-- Advanced audit logging
-- Multi-database tenant isolation  
-- Advanced RBAC permissions
-- Monitoring and analytics
-- Auto-scaling capabilities
+## 🔧 Environment Configuration
 
-## 👥 Contributing
+All environment variables are pre-configured in docker-compose.yml:
+- `MONGODB_URL` - Database connection string
+- `JWT_SECRET` - Authentication token secret
+- `NODE_ENV` - Application environment
+- `N8N_BASIC_AUTH_ACTIVE` - Workflow engine security
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
+## ⚡ Quick Verification
 
-## 📄 License
+Run the verification script to ensure everything works:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```bash
+# Windows
+.\verify-submission.bat
 
-## 🆘 Support
+# Check all services are healthy
+docker-compose ps
 
-For questions or issues:
-- Create an issue in this repository
-- Contact: support@tenantflow.ai
+# Access the platform
+http://localhost:3000
+```
+
+## 🎯 Target Categories
+
+Valid ticket categories for testing:
+- `technical` - System and technical issues
+- `billing` - Payment and billing matters
+- `general` - General inquiries and requests
+- `feature-request` - New feature requests
+- `bug-report` - Software bugs and defects
+
+Valid priorities: `low`, `medium`, `high`, `urgent`
+
+## 🚀 Production Deployment Considerations
+
+- Implement HTTPS/SSL certificates
+- Use separate databases per tenant
+- Add comprehensive monitoring
+- Implement WebSocket for real-time updates
+- Add load balancing for scalability
+- Enhance security with rate limiting
+- Add comprehensive logging and alerting
+
+---
+
+**Repository**: https://github.com/adhi982/Tenantflow-multisupport-platform.git  
+**Built with**: Node.js, React, MongoDB, Docker, N8N  
+**Architecture**: Multi-tenant microservices with container orchestration  
+**Deployment**: Docker Compose for streamlined development  
+
