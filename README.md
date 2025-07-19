@@ -42,12 +42,12 @@ open http://localhost:3000
                     │     (Port 3001)        │
                     │                        │
                     │  - Multi-tenant Auth   │
-                    │  - REST API           │
-                    │  - Webhook Handlers   │
-                    │  - Real-time Updates  │
+                    │  - REST API            │
+                    │  - Webhook Handlers    │
+                    │  - Real-time Updates   │
                     └─────────────┬──────────┘
                                   │
-                    ┌─────────────▼───────────┐
+                    ┌─────────────▼──────────┐
                     │      MongoDB           │
                     │    (Port 27017)        │
                     │                        │
@@ -423,12 +423,3 @@ The demo video showcases:
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For questions or issues:
-- Create an issue in this repository
-- Contact: support@tenantflow.ai
